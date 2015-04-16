@@ -32,6 +32,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <errno.h>
 
 /*********************************************************************************************/
 /* Predefined Modifications */
@@ -44,10 +45,19 @@
 // tries to optimize [>>] and [<<] by using x86 string functions
 #define USE_STRINGFUNCTIONS
 
+// Remove the ifdef if needed
+#ifdef __gnu_linux__
+#define USE_POSIX
+#endif
 
 /* End of Modifications */
 /*********************************************************************************************/
 
+#ifdef USE_POSIX
+#include <sys/mman.h>
+#include <malloc.h>
+#include <unistd.h>
+#endif
 
 // Needn't to be changed, as it can be changed by the user via commandline
 #define STANDARD_MEMLEN		0x8000
@@ -171,7 +181,6 @@ int oneof=10;
  *			255 ... writes 255 to cell, if eof is read
  *			anything else ... leaves the cell unchanged, if eof is read
  */
-
 
 void check_pm(void){
 	if(add_pm!=0){
@@ -367,7 +376,7 @@ void extension_debug_output(int i){
 void extension_debug_stub(void){
 	asm volatile("movl %%esi,%0\n" :: "m" (esi));
 	int zahl1,zahl2;
-	printf("\nDEBUG QUERY\t\tcell pointer at: %d  ",esi-(int)mem-memstart);
+	printf("\nDEBUG QUERY\t\tcell pointer at: %X  ",esi-(int)mem-memstart);
 	if(esi>=mem && esi<mem+memlen)
 		printf("(ok)");
 	else
@@ -648,19 +657,49 @@ void parsebf1(void){
 	*bfcodei=0;
 }
 
-void compile(void){
+char* alloc_execmem(int len){
+	char* execmem;
+#ifdef USE_POSIX
+	int pagesz = sysconf(_SC_PAGE_SIZE);
+	execmem = memalign(pagesz, len);
+#else
+	execmem = malloc(len+4096);	
+#endif
+	if(execmem == NULL) exit(17);
+
+	return execmem;
+}
+
+void bypass_nx(void *mem){
+#ifdef USE_POSIX
+	mprotect(mem, codelen, PROT_READ | PROT_EXEC);
+#endif
+}
+
+char* compile(void){
+	char *execmem;
 	parsebf1();
 	if(datei!=stdin) fclose(datei);
 	bfcodei=bfcode;
-	codelen=proglen();
-	codei=code=malloc(codelen);
+
+	codelen=proglen();	
+	execmem = alloc_execmem(codelen);
+
+	codei = code = execmem;
+	codei=code=malloc(codelen+4096);
 	mem=malloc(memlen*cellsize);
 	memset(mem,0,memlen);
+
 	bfcodei=bfcode;
+
 	program();
+
 	*codei++=0xC3; // Return
+
 	free(bfcode);
 	bfcodei=bfcode=NULL;
+
+	return execmem;
 }
 
 int openfile(int argc, char *argv[]){
@@ -672,6 +711,8 @@ int openfile(int argc, char *argv[]){
 }
 
 int main(int argc, char *argv[]){
+	char *execmem;
+
 	compilername=argv[0];
 	memlen=STANDARD_MEMLEN;
 	memstart=STANDARD_MEMSTART;
@@ -685,9 +726,17 @@ int main(int argc, char *argv[]){
 		scanf("%d",&filesize);
 	}
 	bfcodei=bfcode=malloc(filesize+1);
-	compile();
+	execmem = compile();
 	if(error!=1) return 1;		// if sourcecode is wrong, for instance: "[[++]"
+	
+#ifdef USE_POSIX
+
+	bypass_nx(execmem);
+
+#endif
+
 	asm volatile("call *%0" :: "m" (code), "S" (mem+memstart));		// again plattform specific
 	printf("\n");
+
 	return 0;
 }

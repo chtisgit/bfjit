@@ -1,5 +1,6 @@
-This is one of my old projects. It hasn't seen changes since 2011.
-I assume it won't work anymore an 64 bit systems, it was developed in Windows XP 32 bit.
+This is one of my old projects; it was created in 2011.
+It doesn't work on platforms that don't allow execution of heap.
+Today I fixed it for 64bit Linux. Compile with -m32 flag. 
 
 #BFJIT
 
