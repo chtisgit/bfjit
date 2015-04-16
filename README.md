@@ -19,16 +19,16 @@ writes these onto the heap and then executes them.
 
 The program should be executed from the command line like this:
 
-C:\> bfjit [file] [-16|-32] [-0|-255] [-s start] [-m size]
+	C:\> bfjit [file] [-16|-32] [-0|-255] [-s start] [-m size]
 
-file            name of input file
--m              size of programs memory (standard 32768)
--s              start point of the memory pointer (>=0) (standard 16384)
--16             set cell size to 16 bit
--32             set cell size to 32 bit
--0              writes 0 into cell, if eof is read
--255            writes 255 into cell, if eof is read
--hhelp message
+	file            name of input file
+	-m              size of programs memory (standard 32768)
+	-s              start point of the memory pointer (>=0) (standard 16384)
+	-16             set cell size to 16 bit
+	-32             set cell size to 32 bit
+	-0              writes 0 into cell, if eof is read
+	-255            writes 255 into cell, if eof is read
+	-hhelp message
 
 - if you call bfjit without a filename, you can type the program into the
   commandline.
@@ -39,23 +39,26 @@ file            name of input file
 
 The stock commands + - > < . , [ ] and additionally ! and # are supported.
 
-!is only recognized when in console mode. It seperates code from data (that
+bang (!) is only recognized when in console mode. It seperates code from data (that
 would be impossible otherwise)
-#enters debug query mode. Enter a single number or two numbers seperated by
+
+hash (#) enters debug query mode. Enter a single number or two numbers seperated by
 a comma (note, that the second one must be greater than the first one).
 Then the contents of this/these cell(s) are echoed. Example:
-> -5,5
-[-5]    = 00   0
-[-4]    = 00   0
-[-3]    = 00   0
-[-2]    = 00   0
-[-1]    = 00   0
-[0]     = 00   0
-[1]     = 00   0
-[2]     = 00   0
-[3]     = 00   0
-[4]     = 00   0
-[5]     = 00   0
+
+	-5,5
+
+	[-5]    = 00   0
+	[-4]    = 00   0
+	[-3]    = 00   0
+	[-2]    = 00   0
+	[-1]    = 00   0
+	[0]     = 00   0
+	[1]     = 00   0
+	[2]     = 00   0
+	[3]     = 00   0
+	[4]     = 00   0
+	[5]     = 00   0
 
 
 ##3. SPEED
