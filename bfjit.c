@@ -50,6 +50,8 @@
 #define USE_POSIX
 #endif
 
+//#define DEBUGMODE
+
 /* End of Modifications */
 /*********************************************************************************************/
 
@@ -57,6 +59,10 @@
 #include <sys/mman.h>
 #include <malloc.h>
 #include <unistd.h>
+#endif
+
+#ifdef DEBUGMODE
+#define DEBUG(X) X
 #endif
 
 // Needn't to be changed, as it can be changed by the user via commandline
@@ -686,7 +692,6 @@ char* compile(void){
 	execmem = alloc_execmem(codelen);
 
 	codei = code = execmem;
-	codei=code=malloc(codelen+4096);
 	mem=malloc(memlen*cellsize);
 	memset(mem,0,memlen);
 
@@ -695,9 +700,6 @@ char* compile(void){
 	program();
 
 	*codei++=0xC3; // Return
-
-	free(bfcode);
-	bfcodei=bfcode=NULL;
 
 	return execmem;
 }
@@ -711,8 +713,7 @@ int openfile(int argc, char *argv[]){
 }
 
 int main(int argc, char *argv[]){
-	char *execmem;
-
+	char *execmem;	
 	compilername=argv[0];
 	memlen=STANDARD_MEMLEN;
 	memstart=STANDARD_MEMSTART;
@@ -727,14 +728,19 @@ int main(int argc, char *argv[]){
 	}
 	bfcodei=bfcode=malloc(filesize+1);
 	execmem = compile();
+	free(bfcode);
+	bfcodei=bfcode=NULL;
 	if(error!=1) return 1;		// if sourcecode is wrong, for instance: "[[++]"
 	
-#ifdef USE_POSIX
-
-	bypass_nx(execmem);
-
+#ifdef DEBUGMODE
+	printf("compilation completed with no errors\n");
+	printf("execmem: %p\tcodelen: %d\tmem: %p\tmemlen: %d cells\n", execmem, codelen, mem, memlen);
 #endif
 
+	DEBUG(printf("marking execmem as executable...\n"));
+	bypass_nx(execmem);
+
+	DEBUG(printf("executing...\n"));
 	asm volatile("call *%0" :: "m" (code), "S" (mem+memstart));		// again plattform specific
 	printf("\n");
 
