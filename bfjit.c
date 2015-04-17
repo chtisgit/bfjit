@@ -27,7 +27,7 @@
 */
 /*********************************************************************************************/
 
-
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -63,6 +63,8 @@
 
 #ifdef DEBUGMODE
 #define DEBUG(X) X
+#else
+#define DEBUG(X)
 #endif
 
 // Needn't to be changed, as it can be changed by the user via commandline
@@ -382,7 +384,7 @@ void extension_debug_output(int i){
 void extension_debug_stub(void){
 	asm volatile("movl %%esi,%0\n" :: "m" (esi));
 	int zahl1,zahl2;
-	printf("\nDEBUG QUERY\t\tcell pointer at: %X  ",esi-(int)mem-memstart);
+	printf("\nDEBUG QUERY\t\tcell pointer at: %p  ",esi-(int)mem-memstart);
 	if(esi>=mem && esi<mem+memlen)
 		printf("(ok)");
 	else
@@ -462,7 +464,7 @@ void input_stub_eof_255(void){
 
 void program(void){
 	int tmp;
-	char *loopstart;
+	unsigned char *loopstart;
 	for(look=*bfcodei++;*(bfcodei-1)!=0;look=*bfcodei++){
 		switch(look){
 		case '+':
@@ -663,8 +665,8 @@ void parsebf1(void){
 	*bfcodei=0;
 }
 
-char* alloc_execmem(int len){
-	char* execmem;
+unsigned char* alloc_execmem(int len){
+	unsigned char* execmem;
 #ifdef USE_POSIX
 	int pagesz = sysconf(_SC_PAGE_SIZE);
 	execmem = memalign(pagesz, len);
@@ -682,8 +684,8 @@ void bypass_nx(void *mem){
 #endif
 }
 
-char* compile(void){
-	char *execmem;
+unsigned char* compile(void){
+	unsigned char *execmem;
 	parsebf1();
 	if(datei!=stdin) fclose(datei);
 	bfcodei=bfcode;
@@ -713,7 +715,7 @@ int openfile(int argc, char *argv[]){
 }
 
 int main(int argc, char *argv[]){
-	char *execmem;	
+	unsigned char *execmem;	
 	compilername=argv[0];
 	memlen=STANDARD_MEMLEN;
 	memstart=STANDARD_MEMSTART;
@@ -724,7 +726,7 @@ int main(int argc, char *argv[]){
 	}else{
 		datei=stdin;
 		printf("Program length: ");
-		scanf("%d",&filesize);
+		while(scanf("%d",&filesize) == 0);
 	}
 	bfcodei=bfcode=malloc(filesize+1);
 	execmem = compile();
