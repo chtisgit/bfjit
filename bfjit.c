@@ -46,8 +46,10 @@
 #define USE_STRINGFUNCTIONS
 
 // Remove the ifdef if needed
-#ifdef __gnu_linux__
+#if defined(__unix__) || defined(__MACH__)
 #define USE_POSIX
+#else
+#warning could not determine OS type, bfjit is likely to crash due to heap execution restrictions
 #endif
 
 //#define DEBUGMODE
@@ -57,7 +59,6 @@
 
 #ifdef USE_POSIX
 #include <sys/mman.h>
-#include <malloc.h>
 #include <unistd.h>
 #endif
 
@@ -172,7 +173,7 @@
 
 FILE *datei;
 
-char *compilername;
+const char *compilername;
 
 unsigned char *bfcode,*bfcodei;
 unsigned char *code,look,*codei;
@@ -384,7 +385,7 @@ void extension_debug_output(int i){
 void extension_debug_stub(void){
 	asm volatile("movl %%esi,%0\n" :: "m" (esi));
 	int zahl1,zahl2;
-	printf("\nDEBUG QUERY\t\tcell pointer at: %p  ",esi-(int)mem-memstart);
+	printf("\nDEBUG QUERY\t\tcell pointer at: %p  ",esi-(size_t)mem-memstart);
 	if(esi>=mem && esi<mem+memlen)
 		printf("(ok)");
 	else
@@ -421,7 +422,7 @@ void print_stub(void){
 					"call *%1\n"
 					"pop %%eax\n" // shorter than "add $4, %%esp"
 					"movl %0, %%esi\n"
-					:: "m" (esi), "b" ((int)putchar));
+					:: "m" (esi), "b" ((size_t)putchar));
 }
 
 /*	The next three functions are very similar to each other. They are
@@ -463,7 +464,7 @@ void input_stub_eof_255(void){
 }
 
 void program(void){
-	int tmp;
+	size_t tmp;
 	unsigned char *loopstart;
 	for(look=*bfcodei++;*(bfcodei-1)!=0;look=*bfcodei++){
 		switch(look){
@@ -501,14 +502,14 @@ void program(void){
 			check_pm();
 			check_pn();
 			
-			FARCALL((int)extension_debug_stub)
+			FARCALL((size_t)extension_debug_stub)
 			
 			break;
 		case '.':
 			check_pm();
 			check_pn();
 						
-			FARCALL((int)print_stub)
+			FARCALL((size_t)print_stub)
 			
 			break;
 		case ',':
@@ -517,13 +518,13 @@ void program(void){
 
 			switch(oneof){
 			case 0:
-				FARCALL((int)input_stub_eof_0);
+				FARCALL((size_t)input_stub_eof_0);
 				break;
 			case 255:
-				FARCALL((int)input_stub_eof_255);
+				FARCALL((size_t)input_stub_eof_255);
 				break;
 			default:
-				FARCALL((int)input_stub_eof_none);
+				FARCALL((size_t)input_stub_eof_none);
 				break;
 			}
 			break;
@@ -541,12 +542,12 @@ void program(void){
 			LOOP_BEGIN
 			program();
 			
-			tmp=(int)codei-(int)loopstart-5;
+			tmp=(size_t)codei-(size_t)loopstart-5;
 			SET_LOOPSTART_JMP(tmp)
 			
 			TEST_PTR_ESI
 			
-			tmp=((int)loopstart-(int)codei-1);
+			tmp=((size_t)loopstart-(size_t)codei-1);
 			if(tmp>=-0x7F){
 				JNE_SHORT(tmp)
 			}else{ 
@@ -669,7 +670,10 @@ unsigned char* alloc_execmem(int len){
 	unsigned char* execmem;
 #ifdef USE_POSIX
 	int pagesz = sysconf(_SC_PAGE_SIZE);
-	execmem = memalign(pagesz, len);
+	execmem = malloc(len+pagesz);
+	size_t e = (size_t) execmem;
+	e += (e % pagesz == 0) ? pagesz : pagesz - (e % pagesz);
+	execmem = (void*) e;
 #else
 	execmem = malloc(len+4096);	
 #endif
