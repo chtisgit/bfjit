@@ -2,13 +2,13 @@ This is one of my old projects; it was created in 2011.
 It doesn't work on platforms that don't allow execution of heap.
 Today I fixed it for 64bit Linux. Compile with -m32 flag. 
 
-#BFJIT
+# BFJIT
 
 bfjit is a fast, optimizing heap/aot compiler for brainfuck.
 The program directly translates the brainfuck code into 80386 opcodes, 
 writes these onto the heap and then executes them.
 
-##INDEX
+## INDEX
 
 1. Usage
 2. Brainfuck commands
@@ -16,7 +16,7 @@ writes these onto the heap and then executes them.
 4. Portability
 
 
-##1. USAGE
+## 1. USAGE
 
 The program should be executed from the command line like this:
 
@@ -36,7 +36,7 @@ The program should be executed from the command line like this:
 - the parameters don't have to be written in this order.
 
 
-##2. COMMANDS
+## 2. COMMANDS
 
 The stock commands + - > < . , [ ] and additionally ! and # are supported.
 
@@ -62,7 +62,7 @@ Then the contents of this/these cell(s) are echoed. Example:
 	[5]     = 00   0
 
 
-##3. SPEED
+## 3. SPEED
 
 bfjit is able to compete with the most brainfuck compilers and is about
 24.000 and much more times faster than most interpreters. Well, how is this 
@@ -77,7 +77,7 @@ You can deactivate the replacement of the latter two by putting commentation mar
 before '#define USE_STRINGFUNCTIONS'.
 
 
-##4. PORTABILITY
+## 4. PORTABILITY
 
 Obviously, bfjit currently only works on 80386 processor family, because it generates
 opcodes for this plattform and relies on some inline assembler instruction in its code.
