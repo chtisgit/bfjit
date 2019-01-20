@@ -423,7 +423,7 @@ void print_stub(void){
 					"call *%1\n"
 					"pop %%eax\n" // shorter than "add $4, %%esp"
 					"movl %0, %%esi\n"
-					:: "m" (esi), "b" ((size_t)putchar));
+					:: "m" (esi), "b" ((size_t)putchar) : "cc", "eax", "esi");
 }
 
 /*	The next three functions are very similar to each other. They are
