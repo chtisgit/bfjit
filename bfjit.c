@@ -31,6 +31,7 @@ SOFTWARE.
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stddef.h>
 #include <string.h>
 #include <time.h>
 #include <errno.h>
@@ -464,7 +465,7 @@ void input_stub_eof_255(void){
 }
 
 void program(void){
-	size_t tmp;
+	ptrdiff_t tmp;
 	unsigned char *loopstart;
 	for(look=*bfcodei++;*(bfcodei-1)!=0;look=*bfcodei++){
 		switch(look){
@@ -542,12 +543,12 @@ void program(void){
 			LOOP_BEGIN
 			program();
 			
-			tmp=(size_t)codei-(size_t)loopstart-5;
+			tmp=codei-loopstart-5;
 			SET_LOOPSTART_JMP(tmp)
 			
 			TEST_PTR_ESI
 			
-			tmp=((size_t)loopstart-(size_t)codei-1);
+			tmp=loopstart-codei-1;
 			if(tmp>=-0x7F){
 				JNE_SHORT(tmp)
 			}else{ 
@@ -669,10 +670,10 @@ void parsebf1(void){
 unsigned char* alloc_execmem(int len){
 	unsigned char* execmem;
 #ifdef USE_POSIX
-	int pagesz = sysconf(_SC_PAGE_SIZE);
+	long pagesz = sysconf(_SC_PAGE_SIZE);
 	execmem = malloc(len+pagesz);
 	size_t e = (size_t) execmem;
-	e += (e % pagesz == 0) ? pagesz : pagesz - (e % pagesz);
+	e += (e % pagesz == 0) ? (size_t) pagesz : pagesz - (e % pagesz);
 	execmem = (void*) e;
 #else
 	execmem = malloc(len+4096);	
