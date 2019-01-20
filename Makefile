@@ -9,10 +9,10 @@ OBJS := bfjit.o
 all: bfjit
 
 %.o: %.c
-	$(CC) -m32 -no-pie $(CFLAGS) -c -o $@ $<
+	$(CC) -m32 -no-pie -fno-pic $(CFLAGS) -c -o $@ $<
 
 bfjit: $(OBJS)
-	$(CC) -m32 -no-pie -o $@ $(OBJS)
+	$(CC) -m32 -no-pie -fno-pic -o $@ $(OBJS)
 
 clean:
 	$(RM) $(OBJS) bfjit

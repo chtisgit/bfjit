@@ -426,43 +426,28 @@ void print_stub(void){
 					:: "m" (esi), "b" ((size_t)putchar) : "cc", "eax", "esi");
 }
 
-/*	The next three functions are very similar to each other. They are
- *	split up to speed up the programs runtime.
- */
-void input_stub_eof_none(void){
+void input_stub(void){
 	asm volatile("mov %%esi,%0" :: "m" (esi));
-	unsigned char i;
-	if(feof(stdin)) return;
-	i=getchar();
+	int x = getchar();
+	if(x == EOF){
+		switch(oneof){
+		case 0:
+			x = 0;
+			break;
+		case 255:
+			x = 255;
+			break;
+		default:
+			return;
+		}
+	}
 #ifdef USE_NEWLINE_HACK_13
-	if(i==13) i=10;
+	if (x == '\r') return;
 #endif
-	*esi=i;
+	*esi = (unsigned char) x;
 	asm volatile("mov %0,%%esi\n" :: "m" (esi));
 }
 
-
-void input_stub_eof_0(void){
-	asm volatile("mov %%esi,%0" :: "m" (esi));
-	unsigned char i;
-	if(feof(stdin)) i=0; else i=getchar();
-#ifdef USE_NEWLINE_HACK_13
-	if(i==13) i=10;
-#endif
-	*esi=i;
-	asm volatile("mov %0,%%esi\n" :: "m" (esi));
-}
-
-void input_stub_eof_255(void){
-	asm volatile("mov %%esi,%0" :: "m" (esi));
-	unsigned char i;
-	if(feof(stdin)) i=255; else i=getchar();
-#ifdef USE_NEWLINE_HACK_13
-	if(i==13) i=10;
-#endif
-	*esi=i;
-	asm volatile("mov %0,%%esi\n" :: "m" (esi));
-}
 
 void program(void){
 	ptrdiff_t tmp;
@@ -517,17 +502,7 @@ void program(void){
 			check_pm();
 			check_pn();
 
-			switch(oneof){
-			case 0:
-				FARCALL((size_t)input_stub_eof_0);
-				break;
-			case 255:
-				FARCALL((size_t)input_stub_eof_255);
-				break;
-			default:
-				FARCALL((size_t)input_stub_eof_none);
-				break;
-			}
+			FARCALL((size_t)input_stub);
 			break;
 		case '0':
 			check_pn();
